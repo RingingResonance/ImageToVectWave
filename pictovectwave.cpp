@@ -17,7 +17,7 @@
 **/
 
 #include "lodepng/lodepng.h"
-//#include "lodepng/lodepng.cpp"
+#include "lodepng/lodepng.cpp"
 #include "pictovectwave.h"
 #include <fstream>
 #include <string>
@@ -561,8 +561,8 @@ float argNumber = 0;
     if(argv[i][0]=='-'){
         if(argv[i][1]!='i' && argv[i][1]!='h' && argv[i][1]!='T' &&
            argv[i][1]!='U' && argv[i][1]!='X' && argv[i][1]!='Y'){
-            string wasd = &argv[i][3];
-            argNumber = stof(wasd);
+            std::stringstream wasd(&argv[i][3]);
+            wasd >> argNumber;
         }
         switch (argv[i][1]){
             case 't':
