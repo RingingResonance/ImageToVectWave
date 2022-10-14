@@ -17,7 +17,8 @@
 **/
 
 #include "lodepng/lodepng.h"
-#include "lodepng/lodepng.cpp"
+//This is lazy, uncomment for building on windows.
+//#include "lodepng/lodepng.cpp"
 #include "pictovectwave.h"
 #include <fstream>
 #include <string>
@@ -310,8 +311,16 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
     O_pRemain[i].PointsNormalized[CordY] = O_pRemain[i].PointsNormalized[CordY]+Ymove;
   }
   /// Do integral compensation.
-  double rateFactorX = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorX/1000));
-  double rateFactorY = (Pkeeping/sampF)*(pow((yHighest-yLowest),4)*(compFactorY/1000));
+  double rateFactorX = 0;
+  double rateFactorY = 0;
+  if(swapXY){
+    rateFactorX = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorY/1000));
+    rateFactorY = (Pkeeping/sampF)*(pow((yHighest-yLowest),4)*(compFactorX/1000));
+  }
+  else{
+    rateFactorX = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorX/1000));
+    rateFactorY = (Pkeeping/sampF)*(pow((yHighest-yLowest),4)*(compFactorY/1000));
+  }
   PTindex=0;
   xHighest = 0;
   xLowest = 0;
