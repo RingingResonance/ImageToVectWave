@@ -201,25 +201,25 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
         if(!PKeepers[f] && (PX!=PcmpX || PY!=PcmpY)){
             if(!noFind){
                 XM=PX-1; XP=PX+1; YM=PY-1; YP=PY+1; adj=0;
-                rLook = reverseLookup(XP, PY, PointCount);
+                rLook = reverseLookup(XP, PY, Pkeeping);
                 if(rLook>=0 && !PKeepers[rLook]){
                     shortestNumber = rLook;
                     adj=1; AX=XP; AY=PY;
                     break;
                 }
-                rLook = reverseLookup(PX, YM, PointCount);
+                rLook = reverseLookup(PX, YM, Pkeeping);
                 if(rLook>=0 && !PKeepers[rLook]){
                     shortestNumber = rLook;
                     adj=1; AX=PX; AY=YM;
                     break;
                 }
-                rLook = reverseLookup(XM, PY, PointCount);
+                rLook = reverseLookup(XM, PY, Pkeeping);
                 if(rLook>=0 && !PKeepers[rLook]){
                     shortestNumber = rLook;
                     adj=1; AX=XM; AY=PY;
                     break;
                 }
-                rLook = reverseLookup(PX, YP, PointCount);
+                rLook = reverseLookup(PX, YP, Pkeeping);
                 if(rLook>=0 && !PKeepers[rLook]){
                     shortestNumber = rLook;
                     adj=1; AX=PX; AY=YP;
@@ -311,16 +311,8 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
     O_pRemain[i].PointsNormalized[CordY] = O_pRemain[i].PointsNormalized[CordY]+Ymove;
   }
   /// Do integral compensation.
-  double rateFactorX = 0;
-  double rateFactorY = 0;
-  if(swapXY){
-    rateFactorY = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorX/1000));
-    rateFactorX = (Pkeeping/sampF)*(pow((yHighest-yLowest),4)*(compFactorY/1000));
-  }
-  else{
-    rateFactorX = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorX/1000));
-    rateFactorY = (Pkeeping/sampF)*(pow((yHighest-yLowest),4)*(compFactorY/1000));
-  }
+  double rateFactorX = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorX/1000));
+  double rateFactorY = (Pkeeping/sampF)*(pow((yHighest-yLowest),4)*(compFactorY/1000));
   PTindex=0;
   xHighest = 0;
   xLowest = 0;
