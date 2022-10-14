@@ -42,8 +42,8 @@
     -U :: Swap X and Y for Wave File Output.
     -X :: Invert X for Wave File Output.
     -Y :: Invert Y for Wave File Output.
-    -f :: X CHANNEL bad DAC compensation value. 0 - 10 :: DEFAULT: 0.5
-    -F :: Y CHANNEL bad DAC compensation value. 0 - 10 :: DEFAULT: 3.8
+    -f :: X CHANNEL bad DAC compensation value. 0 - 10 :: DEFAULT: 1
+    -F :: Y CHANNEL bad DAC compensation value. 0 - 10 :: DEFAULT: 1
 
     Debug Options:
     -T :: Create Draw Order Images. This can take a while!
