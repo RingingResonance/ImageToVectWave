@@ -314,8 +314,8 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
   double rateFactorX = 0;
   double rateFactorY = 0;
   if(swapXY){
-    rateFactorX = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorY/1000));
-    rateFactorY = (Pkeeping/sampF)*(pow((yHighest-yLowest),4)*(compFactorX/1000));
+    rateFactorY = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorX/1000));
+    rateFactorX = (Pkeeping/sampF)*(pow((yHighest-yLowest),4)*(compFactorY/1000));
   }
   else{
     rateFactorX = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorX/1000));
