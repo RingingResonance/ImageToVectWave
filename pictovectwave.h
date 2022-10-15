@@ -49,8 +49,8 @@ int traceImages = 0;
 /// Output Volume Scale 0 - 100
 float volume = 25;
 /// Bad Audio DAC compensation Factor
-double compFactorX = 1; //0.5;
-double compFactorY = 1; //3.8;
+double compFactorX = 0; //0.5;
+double compFactorY = 0; //3.8;
 
 const char* filename;
 int GetArgs(int, char**);
@@ -130,8 +130,8 @@ const char *helpText[]{
 "-U :: Swap X and Y for Wave File Output.\n"
 "-X :: Invert X for Wave File Output.\n"
 "-Y :: Invert Y for Wave File Output.\n"
-"-f :: X bad DAC compensation value. 0 - 10 :: DEFAULT: 1\n"
-"-F :: Y bad DAC compensation value. 0 - 10 :: DEFAULT: 1\n"
+"-f :: X bad DAC compensation value. 0 - 10 :: DEFAULT: 0\n"
+"-F :: Y bad DAC compensation value. 0 - 10 :: DEFAULT: 0\n"
 "\nDebug Options: \n"
 "-T :: Create Draw Order Images. This can take a while!\n"
 "-k :: Number of frames to skip when creating Draw Order Images. 0 - 20000 :: DEFAULT: 0\n"
