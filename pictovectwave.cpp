@@ -17,14 +17,21 @@
 **/
 
 #include "lodepng/lodepng.h"
-//This is lazy, uncomment for building on windows.
-//#include "lodepng/lodepng.cpp"
+///Windows Stuff
+#ifndef LINUX_BUILD
+#include "lodepng/lodepng.cpp"
+#include <Windows.h>
+#include <direct.h>
+#endif
+
 #include "pictovectwave.h"
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <cmath>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 using namespace std;
 
@@ -547,9 +554,23 @@ void pngmake(int frameNum, int xRes, int yRes, int type){
     //lodepng_encode24_file(("./output/frame" + std::to_string(frameNum) + ".png"), rgbimage, xRes, yRes);
     stringstream fileNumber;
     switch(type){
-        case 0: fileNumber << "./output/frame" << frameNum << ".png";
+        case 0:
+            #ifdef LINUX_BUILD
+            mkdir("./output",0777);
+            #endif
+            #ifndef LINUX_BUILD
+            _mkdir("./output");
+            #endif
+            fileNumber << "./output/frame" << frameNum << ".png";
         break;
-        case 1: fileNumber << "./debugOut/stage" << frameNum << ".png";
+        case 1:
+            #ifdef LINUX_BUILD
+            mkdir("./debugOut",0777);
+            #endif
+            #ifndef LINUX_BUILD
+            _mkdir("./debugOut");
+            #endif
+            fileNumber << "./debugOut/stage" << frameNum << ".png";
         break;
     }
     lodepng_encode24_file(fileNumber.str().c_str(), rgbimage, xRes, yRes);
