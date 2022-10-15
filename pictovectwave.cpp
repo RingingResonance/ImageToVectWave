@@ -646,7 +646,13 @@ float argNumber = 0;
                 else {cout << "\nArgument Value Out Of Range For: " << &argv[i][0] << ", limit 0 - 10\n"; return 1;}
                 break;
             case 'i':
+                ///Some weird stupid problem/bug.
+                #ifdef LINUX_BUILD
                 filename=&argv[i][3];
+                #endif
+                #ifndef LINUX_BUILD
+                filename=&argv[i][4];
+                #endif
                 gotFile = 0;
                 break;
             case 'h':
