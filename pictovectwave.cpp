@@ -288,6 +288,9 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
   float xLowest = 0;
   float yHighest = 0;
   float yLowest = 0;
+  double xDifAvg = 0;
+  double yDifAvg = 0;
+  float divavg = 1;
   int XHaddr = 0;
   int XLaddr = 0;
   int YHaddr = 0;
@@ -300,10 +303,13 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
 
     if(yHighest < O_pRemain[i].PointsNormalized[CordY])yHighest = O_pRemain[i].PointsNormalized[CordY];
     if(yLowest > O_pRemain[i].PointsNormalized[CordY])yLowest = O_pRemain[i].PointsNormalized[CordY];
-    PTindex++;
+    xDifAvg += (xHighest-xLowest);
+    yDifAvg += (yHighest-yLowest);
+    divavg++;
   }
+  xDifAvg /= divavg;
+  yDifAvg /= divavg;
   //Do centering.
-  PTindex=0;
   float Xmove = ((xHighest+xLowest)/2)*-1;
   float Ymove = ((yHighest+yLowest)/2)*-1;
   for(int i=0;i<Pkeeping;i++){
@@ -311,8 +317,8 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
     O_pRemain[i].PointsNormalized[CordY] = O_pRemain[i].PointsNormalized[CordY]+Ymove;
   }
   /// Do integral compensation.
-  double rateFactorX = (Pkeeping/sampF)*(pow((xHighest-xLowest),4)*(compFactorX/1000));
-  double rateFactorY = (Pkeeping/sampF)*(pow((yHighest-yLowest),4)*(compFactorY/1000));
+  double rateFactorX = ((Pkeeping/sampF)*(compFactorX/100))*(xDifAvg/(xHighest-xLowest));
+  double rateFactorY = ((Pkeeping/sampF)*(compFactorY/100))*(yDifAvg/(yHighest-yLowest));
   PTindex=0;
   xHighest = 0;
   xLowest = 0;
