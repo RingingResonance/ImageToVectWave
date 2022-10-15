@@ -589,7 +589,12 @@ float argNumber = 0;
     if(argv[i][0]=='-'){
         if(argv[i][1]!='i' && argv[i][1]!='h' && argv[i][1]!='T' &&
            argv[i][1]!='U' && argv[i][1]!='X' && argv[i][1]!='Y'){
+            #ifdef LINUX_BUILD
             std::stringstream wasd(&argv[i][3]);
+            #endif
+            #ifndef LINUX_BUILD
+            std::stringstream wasd(&argv[i][4]);
+            #endif
             wasd >> argNumber;
         }
         switch (argv[i][1]){
