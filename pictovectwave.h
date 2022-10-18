@@ -51,20 +51,25 @@ float volume = 25;
 /// Bad Audio DAC compensation Factor
 double compFactorX = 0; //0.5;
 double compFactorY = 0; //3.8;
+float imageScale = 500;
+/// Image AutoScaling
+int AutoScale = 1;
 
 const char* filename;
 int GetArgs(int, char**);
 void pngmake(int, int, int, int);
-void pointToImage(int);
+void pointToImage(int, int, int);
 void debugToImage(int);
 void debugPointToImage(int, int);
-void debugPointToImage2(int, int);
+void scaledPointToImage(int, int, int, int);
 int reverseLookup(int, int, int);
 void pointsToWave(unsigned int, unsigned int, unsigned int);
 unsigned int cord(unsigned int, unsigned int);
+int imageScaling(int);
 
 unsigned char * edgeOut;
 unsigned char * pixelTMP;
+float dimScale = 0;
 
 class C_chSplit{
 public:
@@ -72,6 +77,12 @@ public:
     /** Memory constructor **/
     C_chSplit(void){
         chnls = new unsigned char [3];
+        chnls[0]=0;
+        chnls[1]=0;
+        chnls[2]=0;
+    }
+    ~C_chSplit(void){
+        delete[] chnls;
     }
 };
 
@@ -81,6 +92,11 @@ public:
     /** Memory constructor **/
     C_pTable(void){
         PTable = new unsigned int [2];
+        PTable[0]=0;
+        PTable[1]=0;
+    }
+    ~C_pTable(void){
+        delete[] PTable;
     }
 };
 
@@ -89,15 +105,44 @@ public:
     unsigned int * RemainingPoints;
     unsigned int * PointsOrganized;
     float * PointsNormalized;
-    double * TempNormalized;
+    float * TempNormalized;
     /** Memory constructor **/
     C_pRemain(void){
         RemainingPoints = new unsigned int [2];
+        RemainingPoints[0]=0;
+        RemainingPoints[1]=0;
         PointsOrganized = new unsigned int [2];
+        PointsOrganized[0]=0;
+        PointsOrganized[1]=0;
         PointsNormalized = new float [2];
-        TempNormalized = new double [2];
+        PointsNormalized[0]=0;
+        PointsNormalized[1]=0;
+        TempNormalized = new float [2];
+        TempNormalized[0]=0;
+        TempNormalized[1]=0;
+    }
+    ~C_pRemain(void){
+        delete[] RemainingPoints;
+        delete[] PointsOrganized;
+        delete[] PointsNormalized;
+        delete[] TempNormalized;
     }
 };C_pRemain * O_pRemain;
+
+
+class C_pInterp{
+public:
+    float * PointsInterpolated;
+    /** Memory constructor **/
+    C_pInterp(void){
+        PointsInterpolated = new float [2];
+        PointsInterpolated[0]=0;
+        PointsInterpolated[1]=0;
+    }
+    ~C_pInterp(void){
+        delete[] PointsInterpolated;
+    }
+};C_pInterp * O_pInterp;
 
 unsigned int * PKeepers;
 unsigned int GNX = 0;
@@ -123,6 +168,9 @@ const char *helpText[]{
 "\nStage 2 Edge Detection Options: \n"
 "-m :: Minimum Points In Cluster. Used for culling out stray points. 0 - 255 :: DEFAULT: 3\n"
 "-S :: Points Cluster Size. Used for culling out stray points. 0 - 255 :: DEFAULT: 3\n"
+"\nStage 3 Image Auto Scale Options: \n"
+"-A :: Disable Auto Scaling. :: DEFAULT: ON \n"
+"-I :: Auto Scale Size. :: DEFAULT: 500 \n"
 "\nAudio Out Options: \n"
 "-V :: Wave Output Volume. 0 - 100 :: DEFAULT: 25\n"
 "-s :: Wave File Sample Rate. 0 - 256000 :: DEFAULT: 44100\n"

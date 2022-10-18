@@ -19,11 +19,11 @@
 #include "lodepng/lodepng.h"
 ///Windows Stuff
 #ifndef LINUX_BUILD
-#include "lodepng/lodepng.cpp"
+#include "lodepng/lodepng.cpp"  //Lazy
 #include <Windows.h>
 #include <direct.h>
 #endif
-
+///End Windows Stuff
 #include "pictovectwave.h"
 #include <fstream>
 #include <string>
@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
   }
   cout << "Channels Split, doing horizontal pass. \n";
   edgeOut = new unsigned char [(width*height)];
+  for(int i=0;i<(width*height);i++)edgeOut[i]=0;    //Initialize edgeOut
   int tpix = 0;
   int pix = 0;
   /// Now do edge detection for each channel.
@@ -88,7 +89,7 @@ int main(int argc, char *argv[]) {
         }
       }
   }
-  delete O_channels;
+  delete[] O_channels;
   cout << "Culling low value pixels. \n";
   unsigned int PointCount = 0;
   for(int i=0;i<width*height;i++){
@@ -166,9 +167,7 @@ int main(int argc, char *argv[]) {
         PTindex++;
     }
   }
-  delete O_PTable;
-/// Debug Image Stage 2
-debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
+  delete[] O_PTable;
   /// Organize Points in the drawing order based of distance from each other.
   cout << "There are " << Pkeeping << " points remaining to organize into vectors. This may take some time. \n";
   PTindex = 0;
@@ -261,20 +260,30 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
     }
     resultcount = i+1;
   }
-  delete PKeepers;
-  cout << "Processed " << resultcount << " points.\n" << "Normalizing points. \n";
-  /// Normalize the points.
-  float dimScale = 0;
-  if(height>width)dimScale=height;
-  else dimScale=width;
-  float pointTemp = 0;
-
+  delete[] PKeepers;
+  /// Debug Image Stage 2
+debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
+  cout << "Processed " << resultcount << " points.\n";
+  /// Scale and Normalize the points.
+  if(AutoScale){
+        cout << "Scaling to requested size. " << imageScale << "X" << imageScale << "\n";
+        Pkeeping = imageScaling(Pkeeping);
+  }
+  else{
+    cout << "Keeping original image size as requested. \n";
+    for(int i=0;i<Pkeeping;i++){
+        O_pRemain[i].PointsNormalized[CordX]=O_pRemain[i].PointsOrganized[CordX];
+        O_pRemain[i].PointsNormalized[CordY]=O_pRemain[i].PointsOrganized[CordY];
+    }
+  }
+  //Stage 3 debug image.
+  scaledPointToImage(3, Pkeeping, width, height);
+  if(traceImages)pointToImage(Pkeeping, width, height);
+  //Normalize.
+  cout << "Normalizing points.\n";
   for(int i=0;i<Pkeeping;i++){
-        pointTemp = O_pRemain[i].PointsOrganized[CordX];
-        O_pRemain[i].PointsNormalized[CordX]=((pointTemp/dimScale)-0.5)*2;
-
-        pointTemp = O_pRemain[i].PointsOrganized[CordY];
-        O_pRemain[i].PointsNormalized[CordY]=((pointTemp/dimScale)-0.5)*2;
+        O_pRemain[i].PointsNormalized[CordX]=((O_pRemain[i].PointsNormalized[CordX]/dimScale)-0.5)*2;
+        O_pRemain[i].PointsNormalized[CordY]=((O_pRemain[i].PointsNormalized[CordY]/dimScale)-0.5)*2;
   }
 
   /// Save vector file.
@@ -324,8 +333,8 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
     O_pRemain[i].PointsNormalized[CordY] = O_pRemain[i].PointsNormalized[CordY]+Ymove;
   }
   /// Do integral compensation.
-  double rateFactorX = ((Pkeeping/sampF)*(compFactorX/100))*(xDifAvg/(xHighest-xLowest));
-  double rateFactorY = ((Pkeeping/sampF)*(compFactorY/100))*(yDifAvg/(yHighest-yLowest));
+  double rateFactorX = ((Pkeeping/sampF)*(compFactorX/1000));
+  double rateFactorY = ((Pkeeping/sampF)*(compFactorY/1000));
   PTindex=0;
   xHighest = 0;
   xLowest = 0;
@@ -377,8 +386,8 @@ debugPointToImage(2,Pkeeping); //Derived from RemainingPoints.
   /// Create .wav file from data.
   cout << "Creating WAVE file. \n";
   pointsToWave(Pkeeping, (sampleRate/Pkeeping)*ALength, sampleRate);
-  if(traceImages)pointToImage(Pkeeping);
-  delete edgeOut;
+  delete[] O_pRemain;
+  delete[] edgeOut;
   return 0;
 }
 
@@ -476,6 +485,7 @@ void pointsToWave(unsigned int dataSize,unsigned int passes, unsigned int sampRa
     WVfile.open ("./image.wav",ios::out | ios::binary);
     for(int i=0;i<totalSize;i++)WVfile << AudioOut[i];
     WVfile.close();
+    delete[] AudioOut;
 }
 
 int reverseLookup(int CX, int CY, int CPointCount){
@@ -496,42 +506,56 @@ void debugToImage(int stage){
   pixelTMP = new unsigned char [(width*height)];
   for(int i=0;i<(width*height);i++)pixelTMP[i]=edgeOut[i];
   pngmake(stage, width, height, 1);
-  delete pixelTMP;
+  delete[] pixelTMP;
   /// Now output a test image.
 }
 
 void debugPointToImage(int stage, int pointRemaining){
 /// Create Image Based Off Points Data For Debugging And Tuning.
-  unsigned int frameSkip = 0;
   pixelTMP = new unsigned char [(width*height)];
   GNX = 0;
   GNY = 0;
   for(int i=0;i<(width*height);i++)pixelTMP[i]=0;
   for(int i=0;i<pointRemaining;i++){
-    GNX = O_pRemain[i].RemainingPoints[CordX];
-    GNY = O_pRemain[i].RemainingPoints[CordY];
+    GNX = O_pRemain[i].PointsOrganized[CordX];
+    GNY = O_pRemain[i].PointsOrganized[CordY];
     if(GNX<width && GNY<height)pixelTMP[cord(GNX,GNY)] = 255;
   }
   pngmake(stage, width, height, 1);
-  delete pixelTMP;
+  delete[] pixelTMP;
 }
 
-void pointToImage(int frameNo){
+void scaledPointToImage(int stage, int pointRemaining, int InWidth, int InHeight){
+/// Create Image Based Off Points Data For Debugging And Tuning.
+  pixelTMP = new unsigned char [(InWidth*InHeight)];
+  GNX = 0;
+  GNY = 0;
+  for(int i=0;i<(InWidth*InHeight);i++)pixelTMP[i]=0;
+  for(int i=0;i<pointRemaining;i++){
+    GNX = O_pRemain[i].PointsNormalized[CordX];
+    GNY = O_pRemain[i].PointsNormalized[CordY];
+    if(GNX<InWidth && GNY<InHeight)pixelTMP[(GNY*InWidth)+GNX] = 255;
+  }
+  pngmake(stage, InWidth, InHeight, 1);
+  delete[] pixelTMP;
+}
+
+void pointToImage(int frameNo, int InWidth, int InHeight){
 /// Create Image Based Off Points Data For Debugging And Tuning.
  cout << "Saving Output Images. \n";
   unsigned int PTindex = 0;
   int frameSkip = 0;
-  pixelTMP = new unsigned char [(width*height)];
+  pixelTMP = new unsigned char [(InWidth*InHeight)];
   GNX = 0;
   GNY = 0;
-  for(int i=0;i<(width*height);i++)pixelTMP[i]=0;
+  for(int i=0;i<(InWidth*InHeight);i++)pixelTMP[i]=0;
   for(int i=0;i<frameNo;i++){
-    GNX = O_pRemain[i].PointsOrganized[CordX];
-    GNY = O_pRemain[i].PointsOrganized[CordY];
-    if(GNX<width && GNY<height)pixelTMP[cord(GNX,GNY)] = 255;
-    if(frameSkip > frameskipVal){pngmake(i, width, height, 0);frameSkip=0;cout << "Writing Frame " << i << "\r";}frameSkip++;
+    GNX = O_pRemain[i].PointsNormalized[CordX];
+    GNY = O_pRemain[i].PointsNormalized[CordY];
+    if(GNX<InWidth && GNY<InHeight)pixelTMP[(GNY*InWidth)+GNX] = 255;
+    if(frameSkip > frameskipVal){pngmake(i, InWidth, InHeight, 0);frameSkip=0;cout << "Writing Frame " << i << "\r";}frameSkip++;
   }
-  delete pixelTMP;
+  delete[] pixelTMP;
 }
 
 /* png image make */
@@ -575,11 +599,156 @@ void pngmake(int frameNum, int xRes, int yRes, int type){
     }
     lodepng_encode24_file(fileNumber.str().c_str(), rgbimage, xRes, yRes);
     //cleanup
-    delete rgbimage;
+    delete[] rgbimage;
 }
 
 unsigned int cord(unsigned int x, unsigned int y){
     return (y*width)+x;
+}
+
+int imageScaling(int Pkeeping){
+  if(height>width)dimScale=height;
+  else dimScale=width;
+  /// Create new space for the interpolated points.
+  float newPoints = ((imageScale/dimScale)*Pkeeping)+1;
+  int INTnewPoints = newPoints;
+  O_pInterp = new C_pInterp [INTnewPoints];
+  for(int i=0;i<Pkeeping;i++){
+    O_pRemain[i].TempNormalized[CordX]=(O_pRemain[i].PointsOrganized[CordX]/dimScale)*imageScale;
+    O_pRemain[i].TempNormalized[CordY]=(O_pRemain[i].PointsOrganized[CordY]/dimScale)*imageScale;
+  }
+  //Truncate them. TODO: Need to round them instead.
+  for(int i=0;i<Pkeeping;i++){
+    O_pRemain[i].PointsOrganized[CordX]=O_pRemain[i].TempNormalized[CordX];
+    O_pRemain[i].PointsOrganized[CordY]=O_pRemain[i].TempNormalized[CordY];
+  }
+  float MaxDistance = (1/dimScale)*imageScale;
+  if(width>imageScale || height>imageScale){
+    cout << "Scaling down resolution.\n";
+    int tmpX=O_pRemain[0].PointsOrganized[CordX];
+    int tmpY=O_pRemain[0].PointsOrganized[CordY];
+    int h=1;
+    O_pRemain[0].PointsNormalized[CordX]=tmpX;
+    O_pRemain[0].PointsNormalized[CordY]=tmpY;
+    //Delete duplicates.
+    for(int i=1;i<Pkeeping;i++){
+        if(tmpX!=O_pRemain[i].PointsOrganized[CordX] || tmpY!=O_pRemain[i].PointsOrganized[CordY]){
+            tmpX = O_pRemain[i].PointsOrganized[CordX];
+            tmpY = O_pRemain[i].PointsOrganized[CordY];
+            O_pRemain[h].PointsNormalized[CordX] = O_pRemain[i].PointsOrganized[CordX];
+            O_pRemain[h].PointsNormalized[CordY] = O_pRemain[i].PointsOrganized[CordY];
+            h++;
+        }
+    }
+    Pkeeping=h;
+    cout << Pkeeping << " remaining points after scaling.\n";
+    width=imageScale;
+    height=imageScale;
+  }
+  else if(width<imageScale && height<imageScale){
+    cout << "Scaling up resolution.\n";
+    double tmpX=O_pRemain[0].PointsOrganized[CordX];
+    double tmpY=O_pRemain[0].PointsOrganized[CordY];
+    int h=1;
+    O_pInterp[0].PointsInterpolated[CordX]=tmpX;
+    O_pInterp[0].PointsInterpolated[CordY]=tmpY;
+    double workX = 0;
+    double workY = 0;
+    double slope;
+    double slopeABS;
+    int infinitySlope;
+    //Interpolate between points.
+    for(int i=1;i<Pkeeping;i++){
+        workX = O_pRemain[i].PointsOrganized[CordX];
+        workY = O_pRemain[i].PointsOrganized[CordY];
+        if(sqrt(pow((tmpX-workX),2)+pow((tmpY-workY),2))<=MaxDistance+1){
+            O_pInterp[h].PointsInterpolated[CordX]=workX;
+            O_pInterp[h].PointsInterpolated[CordY]=workY;
+            infinitySlope = 1;
+            if(tmpX!=workX){
+                slope=(tmpY-workY)/(tmpX-workX);
+                infinitySlope = 0;
+            }
+            slopeABS=slope;
+            if(slopeABS<0)slopeABS*=-1;
+            if(slopeABS<1 && !infinitySlope){
+                if(tmpX<workX){
+                    for(float XX=tmpX;XX<workX;XX++){
+                        O_pInterp[h].PointsInterpolated[CordX]=XX;
+                        O_pInterp[h].PointsInterpolated[CordY]=(XX*slope)+tmpY;
+                        h++;
+                    }
+                }
+                else{
+                    for(float XX=tmpX;XX>workX;XX--){
+                        O_pInterp[h].PointsInterpolated[CordX]=XX;
+                        O_pInterp[h].PointsInterpolated[CordY]=(XX*slope)+tmpY;
+                        h++;
+                    }
+                }
+            }
+            else if(slopeABS>1){
+                slope=(tmpX-workX)/(tmpY-workY);
+                if(tmpY<workY){
+                    for(float YY=tmpY;YY<workY;YY++){
+                        O_pInterp[h].PointsInterpolated[CordY]=YY;
+                        O_pInterp[h].PointsInterpolated[CordX]=(YY*slope)+tmpX;
+                        h++;
+                    }
+                }
+                else{
+                    for(float YY=tmpY;YY>workY;YY--){
+                        O_pInterp[h].PointsInterpolated[CordY]=YY;
+                        O_pInterp[h].PointsInterpolated[CordX]=(YY*slope)+tmpX;
+                        h++;
+                    }
+                }
+            }
+            else{
+                if(tmpY<workY){
+                    for(float YY=tmpY;YY<workY;YY++){
+                        O_pInterp[h].PointsInterpolated[CordY]=YY;
+                        O_pInterp[h].PointsInterpolated[CordX]=tmpX;
+                        h++;
+                    }
+                }
+                else{
+                    for(float YY=tmpY;YY>workY;YY--){
+                        O_pInterp[h].PointsInterpolated[CordY]=YY;
+                        O_pInterp[h].PointsInterpolated[CordX]=tmpX;
+                        h++;
+                    }
+                }
+            }
+            tmpX = workX;
+            tmpY = workY;
+        }
+        else{
+            O_pInterp[h].PointsInterpolated[CordX] = O_pRemain[i].PointsOrganized[CordX];
+            O_pInterp[h].PointsInterpolated[CordY] = O_pRemain[i].PointsOrganized[CordY];
+            tmpX = O_pRemain[i].PointsOrganized[CordX];
+            tmpY = O_pRemain[i].PointsOrganized[CordY];
+            h++;
+        }
+    }
+    Pkeeping=h;
+    delete[] O_pRemain;
+    O_pRemain = new C_pRemain [Pkeeping];
+    for(int i=0;i<Pkeeping;i++){
+        O_pRemain[i].PointsNormalized[CordX] = O_pInterp[i].PointsInterpolated[CordX];
+        O_pRemain[i].PointsNormalized[CordY] = O_pInterp[i].PointsInterpolated[CordY];
+    }
+    cout << Pkeeping << " points after scaling.\n";
+    width=imageScale;
+    height=imageScale;
+  }
+  else{
+    for(int i=0;i<Pkeeping;i++){
+        O_pRemain[i].PointsNormalized[CordX] = O_pRemain[i].PointsOrganized[CordX];
+        O_pRemain[i].PointsNormalized[CordY] = O_pRemain[i].PointsOrganized[CordY];
+    }
+  }
+  return Pkeeping;
 }
 
 int GetArgs(int argc, char **argv){
@@ -663,6 +832,13 @@ float argNumber = 0;
             case 'h':
                 cout << helpText[0];
                 return 1;
+                break;
+            case 'A':
+                AutoScale = 0;
+                break;
+            case 'I':
+                if(argNumber>=10&&argNumber<=10000)imageScale=argNumber;
+                else {cout << "\nArgument Value Out Of Range For: " << &argv[i][0] << ", limit 10 - 10000\n"; return 1;}
                 break;
         }
     }

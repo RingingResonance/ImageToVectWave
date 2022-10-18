@@ -1,2 +1,2 @@
-pictovectwave.exe -i testpattern.png
+pictovectwave.exe -i testpatternSmall.png
 pause
