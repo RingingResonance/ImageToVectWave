@@ -34,6 +34,10 @@
     Stage 2 Edge Detection Options:
     -m :: Minimum Points In Cluster. Used for culling out stray points. 0 - 255 :: DEFAULT: 3
     -S :: Points Cluster Size. Used for culling out stray points. 0 - 255 :: DEFAULT: 3
+    
+    Stage 3 Image Auto Scale Options:
+    -A :: Disable Auto Scaling. :: DEFAULT: ON
+    -I :: Auto Scale Size. :: DEFAULT: 500
 
     Audio Out Options:
     -V :: Wave Output Volume. 0 - 100 :: DEFAULT: 25
